@@ -19,8 +19,9 @@ SO how to achieve this HA ?
 
 it also take care of https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[AWS cloud provider requirements] by tagging needed resources and creating the required IAM.
 
+In a high level the following digram show the different componets that will be created.
 
-image::./img/design.jpeg[]
+image::./img/RKE2-AWS.jpeg[]
 
 
 
