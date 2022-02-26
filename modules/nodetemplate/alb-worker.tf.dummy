@@ -1,0 +1,75 @@
+resource "aws_lb" "ingress_external" {
+  count = local.public_endpoints ? 1 : 0
+
+  name                             = "${var.vpc_id}-ext"
+  load_balancer_type               = "application"
+  subnets                          = data.aws_subnet.private.*.id
+  internal                         = false
+  enable_cross_zone_load_balancing = true
+
+  tags = merge(
+    {
+      "Name" = "${var.vpc_id}-wext"
+    },
+    var.tags,
+  )
+
+  timeouts {
+    create = "20m"
+  }
+
+  depends_on = [aws_internet_gateway.igw]
+}
+
+resource "aws_lb_target_group" "ingress_external" {
+  count = length(var.lb_port)
+
+  name     = "${var.vpc_id}-${count.index}-wext"
+  port     = var.lb_port[count.index]
+  protocol = var.lb_port_to_protocol[var.lb_port[count.index]]
+  vpc_id   = data.aws_vpc.cluster_vpc.id
+
+  target_type = "alb"
+
+  tags = merge(
+    {
+      "Name" = "${var.vpc_id}-wext"
+    },
+    var.tags,
+  )
+
+  # really not sure what we want to check, is that port is responsive or nginx is sane, let me start with port probing
+  health_check {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    interval            = 10
+    port                = var.lb_port[count.index]
+    protocol            = var.lb_port_to_protocol[var.lb_port[count.index]]
+  }
+
+  # https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/cli-arguments.md
+  # --health-check-path	URL path of the health check endpoint. Configured inside the NGINX status server. All requests received on the port defined by the healthz-port parameter are forwarded internally to this path. (default "/healthz")
+  # --health-check-timeout	Time limit, in seconds, for a probe to health-check-path to succeed. (default 10)
+  # --healthz-port	Port to use for the healthz endpoint. (default 10254)
+  # health_check {
+  #   healthy_threshold   = 2
+  #   unhealthy_threshold = 2
+  #   interval            = 10
+  #   port                = var.lb_port[count.index]
+  #   protocol            = var.lb_port_to_protocol[var.lb_port[count.index]]
+  #   path                = "/healthz"
+  # }
+}
+
+resource "aws_lb_listener" "ingress_external" {
+  count = length(var.lb_port)
+
+  load_balancer_arn = aws_lb.ingress_external.arn
+  port     = var.lb_port[count.index]
+  protocol = var.lb_port_to_protocol[var.lb_port[count.index]]
+
+  default_action {
+    target_group_arn = aws_lb_target_group.ingress_external.arn
+    type             = "forward"
+  }
+}
