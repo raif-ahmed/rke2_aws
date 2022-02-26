@@ -9,14 +9,6 @@ locals {
   )
 }
 
-#
-# Cluster join token
-#
-resource "random_password" "token" {
-  length  = 40
-  special = false
-}
-
 
 module "vpc" {
   source = "./modules/vpc"
@@ -143,7 +135,7 @@ module "nodetemplate" {
   target_group_arns_length      = module.vpc.aws_lb_target_group_arns_length
   ec2_ami                       = local.ec2_worker_ami.image_id
   user_data                     = ""
-  asg                           = { min = 0, max = 3, desired = 0 }
+  asg                           = { min = 0, max = 5, desired = 1 }
   use_spot                      = false
 }
 
