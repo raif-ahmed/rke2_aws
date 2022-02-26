@@ -16,7 +16,9 @@ SO how to achieve this HA ?
 . API End Point, either API server or register End point is exposed on two LB's one is public and the other is private so that external CLI and external clients can talk on the public LB and the private LB is used to expose the API server & register End point for agent nodes. This will seggregate the communication for both security and performance.
 . Create https://docs.aws.amazon.com/autoscaling/ec2/userguide/AutoScalingGroup.html[ASG] for worker nodes, each on different private subnets each on different AZ, this ASG will allow the https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md[Cluster autoscaler] later on to scale nodes automatically for us on different AZ.
 
+
 it also take care of https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[AWS cloud provider requirements] by tagging needed resources and creating the required IAM.
+
 
 image::./img/design.jpeg[]
 
