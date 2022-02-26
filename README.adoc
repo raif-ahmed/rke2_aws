@@ -9,11 +9,14 @@ This project uses mainly Terraform as infrastructure management and installation
 
 == Infrastructure Architecture
 
-The idea is to build a HA infrastructure with so we build multiple masters and agent nodes on multiple subnets and multiple az.
+The idea is to build a HA infrastructure that can be used later for RKE2 installation which also support the https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/[AWS cloud provider requirements].
 
-API server & register End point is exposed on two LB's public and private so the external CLI and external clients can talk on the public LB and the private LB is used to expose the API server & register End point for agent nodes.
+SO how to achieve this HA ?
+. We will build our VPC with multiple subnets (public & private) each on different AZ 
+. API End Point, either API server or register End point is exposed on two LB's one is public and the other is private so that external CLI and external clients can talk on the public LB and the private LB is used to expose the API server & register End point for agent nodes. This will seggregate the communication for both security and performance.
+. Create https://docs.aws.amazon.com/autoscaling/ec2/userguide/AutoScalingGroup.html[ASG] for worker nodes, each on different private subnets each on different AZ, this ASG will allow the https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md[Cluster autoscaler] later on to scale nodes automatically for us on different AZ.
 
-it also take care of AWS cloud provider requirements https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/ from tagging and IAM PoV
+it also take care of AWS cloud provider requirements https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/ from tagging needed resources and creating the required IAM.
 
 image::./img/design.jpeg[]
 
