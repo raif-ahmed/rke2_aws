@@ -82,3 +82,15 @@ variable "publish_strategy" {
 variable "aws_key_name" {
   type = string
 }
+
+
+
+variable "s3_files_location" {
+
+  type = list(object({
+    local_path = string,
+    s3_path    = string
+  }))
+  default     = []
+  description = "S3 files needed to be downloaded to the jumpbox."
+}

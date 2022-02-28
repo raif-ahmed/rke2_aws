@@ -212,7 +212,7 @@ variable "enable_autoscaler_auto_discovery" {
 }
 
 variable "autoscaler_nodetemplate_count" {
-  type        = number 
+  type        = number
   description = "The number of ASG to create for the cluster autoscaler"
 }
 

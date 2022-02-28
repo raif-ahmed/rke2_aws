@@ -23,5 +23,52 @@ The following diagram shows In a high level the different components that will b
 
 image::./img/RKE2-AWS.jpeg[]
 
+=== Terraform Modules
+
+==== vpc
+As expected this module Create the VPC, subnets (public & private), security groups and two load balancers - public for Control Plane (6443), private for Control Plane (6443 & 9345)
+
+==== iam
+define AWS authorities for the masters, workers, and also cluster auto scaler auto-discovery. Those roles and role policies are important so AWS cloud provider can have the needed privileges to work afterwards.
+
+==== jumpbox
+module to provision a jumpbox with public IP & SSH access so we can use it to manage the deployment in more controlled way (we will only enable ssh to this node).
+
+==== nodes
+create ec2 nodes and place them in the required subnet with the needed IAM instance profile role. This is the primary method for defining Master nodes (Master nodes will not be part of cluster auto-scaler discovery group) 
+
+==== nodetemplate
+create auto scale group (ASG) and launch template that will be used by cluster auto-scalers to resize worker (agent-nodes). This is the primary method for defining nodes in which cluster workloads will run.
+
+==== route53
+generate a public and/or private hosted zone using route 53
+
+== Usage
+
+=== Prerequisites 
+
+git cli
+
+https://www.atlassian.com/git/tutorials/install-git#linux
 
 
+
+
+terraform 0.15 or later
+
+aws privileges
+
+=== Installation Procedure
+
+
+
+git clone
+
+Deploying the cluster
+Initialize the Terraform:
+
+terraform init
+Run the terraform provisioning:
+
+terraform plan
+terraform apply

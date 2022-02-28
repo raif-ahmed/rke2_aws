@@ -51,6 +51,15 @@ module "iam" {
   enable_autoscaler_auto_discovery = var.enable_autoscaler_auto_discovery
 }
 
+module "s3" {
+  source = "./modules/s3"
+
+  bucket_create   = true
+  bucket_name     = format("%s-%s", var.cluster_id, "jumpbox")
+  bucket_contents = [{ "key" = "id_rsa", "content_base64" = "${base64encode(tls_private_key.ssh_key.private_key_pem)}" }]
+
+  tags = local.tags
+}
 module "jumpbox" {
   source = "./modules/jumpbox"
 
@@ -65,6 +74,8 @@ module "jumpbox" {
   vpc_cidrs                = module.vpc.vpc_cidrs
   volume_kms_key_id        = var.aws_root_volume_kms_key_id
   publish_strategy         = var.aws_publish_strategy
+
+  s3_files_location = [{ "local_path" = "", "s3_path" = "" }]
 
   tags = local.tags
 }
@@ -106,7 +117,7 @@ module "masters" {
 module "nodetemplate" {
   source = "./modules/nodetemplate"
   # I want to have an ASG in each AZ (private subnet)
-  count  = var.autoscaler_nodetemplate_count
+  count = var.autoscaler_nodetemplate_count
 
   cluster_id    = var.cluster_id
   instance_type = var.aws_worker_instance_type
@@ -124,19 +135,19 @@ module "nodetemplate" {
   ec2_sg_ids                    = [module.vpc.worker_sg_id]
   aws_iam_instance_profile_name = module.iam.worker_instance_profile_name
   # subnet_id                   = module.vpc.private_subnet_ids[count.index]
-  subnet_id                     = module.vpc.az_to_private_subnet_id[data.aws_availability_zones.aws_azs.names[(count.index % length(data.aws_availability_zones.aws_azs.names))]]
-  aws_key_name                  = aws_key_pair.ssh_key.key_name
-  root_volume_iops              = var.aws_worker_root_volume_iops
-  root_volume_size              = var.aws_worker_root_volume_size
-  root_volume_type              = var.aws_worker_root_volume_type
-  root_volume_encrypted         = var.aws_worker_root_volume_encrypted
-  root_volume_kms_key_id        = var.aws_root_volume_kms_key_id
-  target_group_arns             = module.vpc.aws_lb_target_group_arns
-  target_group_arns_length      = module.vpc.aws_lb_target_group_arns_length
-  ec2_ami                       = local.ec2_worker_ami.image_id
-  user_data                     = ""
-  asg                           = { min = 0, max = 5, desired = 1 }
-  use_spot                      = false
+  subnet_id                = module.vpc.az_to_private_subnet_id[data.aws_availability_zones.aws_azs.names[(count.index % length(data.aws_availability_zones.aws_azs.names))]]
+  aws_key_name             = aws_key_pair.ssh_key.key_name
+  root_volume_iops         = var.aws_worker_root_volume_iops
+  root_volume_size         = var.aws_worker_root_volume_size
+  root_volume_type         = var.aws_worker_root_volume_type
+  root_volume_encrypted    = var.aws_worker_root_volume_encrypted
+  root_volume_kms_key_id   = var.aws_root_volume_kms_key_id
+  target_group_arns        = module.vpc.aws_lb_target_group_arns
+  target_group_arns_length = module.vpc.aws_lb_target_group_arns_length
+  ec2_ami                  = local.ec2_worker_ami.image_id
+  user_data                = ""
+  asg                      = { min = 0, max = 5, desired = 1 }
+  use_spot                 = false
 }
 
 module "dns" {

@@ -123,6 +123,34 @@ resource "aws_security_group_rule" "egress" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
+# i will need two files, the cloud-init & the bash to connect to s3
+data "template_file" "cloud_init" {
+  template = file("${path.module}/templates/cloud-init.yaml")
+}
+
+# Render a multi-part cloud-init config making use of the part
+# above, and other source files
+data "template_cloudinit_config" "config" {
+  gzip          = true
+  base64_encode = true
+
+  # Main cloud-config configuration file.
+  part {
+    filename     = "cloud-config.yaml"
+    content_type = "text/cloud-config"
+    content      = data.template_file.cloud_init.rendered
+  }
+
+  part {
+    filename     = "00_download_s3.sh"
+    content_type = "text/x-shellscript"
+    content = templatefile("${path.module}/templates/download_s3.tftpl", {
+      s3_files_location = var.s3_files_location
+    })
+  }
+
+}
+
 resource "aws_instance" "jumpbox" {
   ami = var.ec2_ami
 
@@ -132,6 +160,8 @@ resource "aws_instance" "jumpbox" {
   vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.jumpbox.id])
   associate_public_ip_address = local.public_endpoints
   key_name                    = var.aws_key_name
+  user_data                   = data.template_cloudinit_config.config.rendered
+
 
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This
@@ -161,8 +191,6 @@ resource "aws_instance" "jumpbox" {
     var.tags,
   )
 }
-
-
 
 
 
