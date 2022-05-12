@@ -43,7 +43,7 @@ resource "aws_lb" "api_external" {
 }
 
 resource "aws_lb_target_group" "api_internal" {
-  name     = "${var.vpc_id}-aint"
+  name     = "${var.vpc_id}-api-int"
   protocol = "TCP"
   port     = 6443
   vpc_id   = data.aws_vpc.cluster_vpc.id
@@ -52,7 +52,7 @@ resource "aws_lb_target_group" "api_internal" {
 
   tags = merge(
     {
-      "Name" = "${var.vpc_id}-aint"
+      "Name" = "${var.vpc_id}-api-int"
     },
     var.tags,
   )
@@ -84,7 +84,7 @@ resource "aws_lb_target_group" "api_internal" {
 resource "aws_lb_target_group" "api_external" {
   count = local.public_endpoints ? 1 : 0
 
-  name     = "${var.vpc_id}-aext"
+  name     = "${var.vpc_id}-api-ext"
   protocol = "TCP"
   port     = 6443
   vpc_id   = data.aws_vpc.cluster_vpc.id
@@ -93,7 +93,7 @@ resource "aws_lb_target_group" "api_external" {
 
   tags = merge(
     {
-      "Name" = "${var.vpc_id}-aext"
+      "Name" = "${var.vpc_id}-api-ext"
     },
     var.tags,
   )
@@ -123,7 +123,7 @@ resource "aws_lb_target_group" "api_external" {
 }
 
 resource "aws_lb_target_group" "register" {
-  name     = "${var.vpc_id}-rint"
+  name     = "${var.vpc_id}-reg-int"
   protocol = "TCP"
   port     = 9345
   vpc_id   = data.aws_vpc.cluster_vpc.id
@@ -132,7 +132,7 @@ resource "aws_lb_target_group" "register" {
 
   tags = merge(
     {
-      "Name" = "${var.vpc_id}-rint"
+      "Name" = "${var.vpc_id}-reg-int"
     },
     var.tags,
   )

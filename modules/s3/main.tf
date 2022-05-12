@@ -46,6 +46,10 @@ resource "aws_s3_object" "this_bucket_object" {
 
   server_side_encryption = "AES256"
 
+  metadata = {
+    "local_path" = var.bucket_contents[count.index].local_path
+  }
+
   tags = merge(
     {
       "Name" = "${var.bucket_contents[count.index].key}"

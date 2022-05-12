@@ -83,14 +83,17 @@ variable "aws_key_name" {
   type = string
 }
 
+variable "download_files_from_bucket" {
+  type = bool
+}
 
+variable "bucket_name" {
+  type = string
+}
 
-variable "s3_files_location" {
+variable "bucket_objects" {
 
-  type = list(object({
-    local_path = string,
-    s3_path    = string
-  }))
+  type        = list(any)
   default     = []
   description = "S3 files needed to be downloaded to the jumpbox."
 }

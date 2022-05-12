@@ -60,7 +60,7 @@ resource "aws_security_group_rule" "master_ingress_ssh" {
   to_port     = 22
 }
 
-resource "aws_security_group_rule" "master_ingress_https" {
+resource "aws_security_group_rule" "master_ingress_api_https" {
   type              = "ingress"
   security_group_id = aws_security_group.master.id
 

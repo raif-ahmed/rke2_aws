@@ -100,3 +100,4 @@ data "aws_ami" "windows" {
   }
 
 }
+

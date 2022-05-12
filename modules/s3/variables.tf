@@ -11,7 +11,8 @@ variable "bucket_contents" {
 
   type = list(object({
     key            = string,
-    content_base64 = string
+    content_base64 = string,
+    local_path     = string
   }))
   description = "Bucket Contents."
 }

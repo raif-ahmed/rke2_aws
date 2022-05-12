@@ -41,12 +41,16 @@ create ec2 nodes and place them in the required subnet with the needed IAM insta
 create auto scale group (ASG) and launch template that will be used by cluster auto-scalers to resize worker (agent-nodes). This is the primary method for defining nodes in which cluster workloads will run.
 
 ==== route53
+a generic module to create and upload files to s3 buckets. This is useful to upload files to jumpbox and nodes through cloud-init script that download those files to the machine on startup. 
+
+==== route53
 generate a public and/or private hosted zone using route 53
 
 == Usage
 
 === Prerequisites 
 
+to use 
 git cli
 
 https://www.atlassian.com/git/tutorials/install-git#linux

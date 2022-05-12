@@ -8,6 +8,8 @@ data "aws_partition" "current" {}
 
 data "aws_ebs_default_kms_key" "current" {}
 
+
+
 resource "aws_iam_instance_profile" "jumpbox" {
   name = "${var.cluster_id}-jumpbox-profile"
 
@@ -125,28 +127,33 @@ resource "aws_security_group_rule" "egress" {
 
 # i will need two files, the cloud-init & the bash to connect to s3
 data "template_file" "cloud_init" {
-  template = file("${path.module}/templates/cloud-init.yaml")
+  template = file("${path.module}/templates/cloud-init.tftpl")
 }
 
 # Render a multi-part cloud-init config making use of the part
 # above, and other source files
 data "template_cloudinit_config" "config" {
-  gzip          = true
+  gzip          = false
   base64_encode = true
 
   # Main cloud-config configuration file.
   part {
-    filename     = "cloud-config.yaml"
+    filename     = "init.cfg"
     content_type = "text/cloud-config"
     content      = data.template_file.cloud_init.rendered
   }
 
-  part {
-    filename     = "00_download_s3.sh"
-    content_type = "text/x-shellscript"
-    content = templatefile("${path.module}/templates/download_s3.tftpl", {
-      s3_files_location = var.s3_files_location
-    })
+  dynamic "part" {
+    for_each = var.download_files_from_bucket ?  ["yes"] : []
+
+    content {
+      filename     = "00_download_s3.sh"
+      content_type = "text/x-shellscript"
+      content = templatefile("${abspath(path.root)}/templates/download_s3.tftpl", {
+        bucket_name = var.bucket_name
+        s3_files    = var.bucket_objects
+      })
+    }
   }
 
 }
@@ -160,7 +167,8 @@ resource "aws_instance" "jumpbox" {
   vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.jumpbox.id])
   associate_public_ip_address = local.public_endpoints
   key_name                    = var.aws_key_name
-  user_data                   = data.template_cloudinit_config.config.rendered
+  user_data_base64            = data.template_cloudinit_config.config.rendered
+  # user_data                   = data.template_cloudinit_config.config.rendered
 
 
   lifecycle {
