@@ -182,13 +182,3 @@ spec:
         - name: ssl-certs
           hostPath:
             path: /var/lib/ca-certificates/ca-bundle.pem #"/etc/ssl/certs/ca-bundle.crt"
-# ---
-# apiVersion: v1
-# kind: Secret
-# metadata:
-#   name: aws-secret
-#   namespace: kube-system
-# type: Opaque
-# data:
-#   aws_access_key_id: QUtJQTNBV0hPVU1XWUNTTUNSVUU=
-#   aws_secret_access_key: aHMzNE9kMXhXclRBY29XYVhGR1hnUjVaTk1uRi9JdTBlejUvLzY4bQ==
