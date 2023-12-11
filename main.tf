@@ -9,7 +9,6 @@ locals {
   )
 }
 
-
 module "vpc" {
   source = "./modules/vpc"
 
@@ -50,6 +49,7 @@ module "iam" {
   tags                             = local.tags
   enable_autoscaler_auto_discovery = var.enable_autoscaler_auto_discovery
 }
+
 # normally the files i want on any machine i will upload them to s3, 
 # then download them from s3 during cloud-init
 module "jumpbox_s3" {

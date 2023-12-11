@@ -28,11 +28,11 @@ resource "aws_s3_bucket" "this_bucket" {
   }
 }
 
-resource "aws_s3_bucket_acl" "this_bucket_acl" {
-  count  = var.bucket_create ? 1 : 0
-  bucket = aws_s3_bucket.this_bucket[count.index].id
-  acl    = "private"
-}
+# resource "aws_s3_bucket_acl" "this_bucket_acl" {
+#   count  = var.bucket_create ? 1 : 0
+#   bucket = aws_s3_bucket.this_bucket[count.index].id
+#   acl    = "private"
+# }
 
 
 resource "aws_s3_object" "this_bucket_object" {

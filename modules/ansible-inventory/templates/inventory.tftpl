@@ -1,0 +1,56 @@
+; Optional hostvars that can be pased in to individual nodes include node_ip, node_name, bind_address, advertise_address, node_taints=[], node_labels=[], and node_external_ip
+; Example:
+[rke2_servers]
+; host0 node_labels='["extraLabel0=true"]' node_ip="10.10.10.10" node_name="customName0" bind_address="10.10.10.10" advertise_adress="10.10.10.10" node_external_ip="52.52.52.52" node_taints='["CriticalAddonsOnly=true:NoSchedule"]' cloud_provider_name="aws"
+; host1 node_labels='["extraLabel1=true"]' node_ip="10.10.10.11" node_name="customName1" node_taints='["CriticalAddonsOnly=true:NoSchedule"]' cloud_provider_name="aws"
+; host2 node_labels='["extraLabel0=true"]' node_ip="10.10.10.12" node_name="customName1" node_taints='["CriticalAddonsOnly=true:NoSchedule"]' cloud_provider_name="aws"
+
+[rke2_agents]
+; host4
+; host5
+; host6
+
+[rke2_cluster:children]
+rke2_servers
+rke2_agents
+
+[rke2_agents:vars]
+# Primary RKE2 agent configuration parameters. Remove the curly braces ( {} ) and add your configuration.
+# See https://docs.rke2.io/install/install_options/linux_agent_config/ for all configuration options.
+rke2_config: {}
+  # debug: false
+
+# See https://docs.rke2.io/install/containerd_registry_configuration/
+# Add a registry configuration file by specifying the file path on the control host
+# registry_config_file_path: "{{ playbook_dir }}/sample_files/registries.yaml"
+
+
+
+[rke2_servers:vars]
+#rke2_config:
+#  selinux: true
+#  profile: cis-1.6
+#  kube-controller-manager-arg:
+#  - "tls-min-version=VersionTLS12"
+#  - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+#  kube-scheduler-arg:
+#  - "tls-min-version=VersionTLS12"
+#  - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+#  kube-apiserver-arg:
+#  - "tls-min-version=VersionTLS12"
+#  - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+#  - "enable-admission-plugins=ValidatingAdmissionWebhook,NodeRestriction,PodSecurityPolicy"
+#  - "request-timeout=300s"
+#  # Enable only when auditing is enabled, blocks API when audit fails
+#  #- "audit-log-mode=blocking-strict"
+#
+#  kubelet-arg:
+#  - "feature-gates=DynamicKubeletConfig=false"
+#  - "protect-kernel-defaults=true"
+#  - "streaming-connection-idle-timeout=5m"
+#
+#  # Available in RKE2 1.21
+#  #etcd-extra-env:
+#  #- "ETCD_AUTO_TLS=false"
+#  #- "ETCD_PEER_AUTO_TLS=false"
+#

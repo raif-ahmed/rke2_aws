@@ -92,4 +92,15 @@ resource "aws_security_group_rule" "worker_ingress_metrics" {
   to_port     = 10250
 }
 
+resource "aws_security_group_rule" "worker_ingress_nodeport" {
+  description       = "NodePort range Ingress"
+  type              = "ingress"
+  security_group_id = aws_security_group.worker.id
+
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_blocks
+  from_port   = 30000 
+  to_port     = 32767
+}
+
 # TODO Calico CNI & Canal CNI
