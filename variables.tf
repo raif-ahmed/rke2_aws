@@ -153,6 +153,13 @@ variable "aws_publish_strategy" {
   default     = "External"
 }
 
+variable "aws_publish_jumbbox" {
+  type        = string
+  description = "The cluster publishing strategy, either Internal or External"
+  # default     = "Internal"
+  default     = "External"
+}
+
 variable "is_public_zone_exists" {
   description = "In the public zone already exists and no need to create it"
   type        = bool

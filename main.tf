@@ -68,13 +68,13 @@ module "jumpbox" {
   instance_type              = var.aws_jumpbox_instance_type
   cluster_id                 = var.cluster_id
   aws_key_name               = aws_key_pair.ssh_key.key_name
-  subnet_id                  = var.aws_publish_strategy == "External" ? module.vpc.az_to_public_subnet_id[data.aws_availability_zones.aws_azs.names[0]] : module.vpc.az_to_private_subnet_id[data.aws_availability_zones.aws_azs.names[0]]
+  subnet_id                  = var.aws_publish_jumbbox == "External" ? module.vpc.az_to_public_subnet_id[data.aws_availability_zones.aws_azs.names[0]] : module.vpc.az_to_private_subnet_id[data.aws_availability_zones.aws_azs.names[0]]
   target_group_arns          = module.vpc.aws_lb_target_group_arns
   target_group_arns_length   = module.vpc.aws_lb_target_group_arns_length
   vpc_id                     = module.vpc.vpc_id
   vpc_cidrs                  = module.vpc.vpc_cidrs
   volume_kms_key_id          = var.aws_root_volume_kms_key_id
-  publish_strategy           = var.aws_publish_strategy
+  publish_strategy           = var.aws_publish_jumbbox
   download_files_from_bucket = true
   bucket_name                = module.jumpbox_s3.bucket_name
   bucket_objects             = module.jumpbox_s3.bucket_objects

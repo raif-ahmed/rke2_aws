@@ -43,21 +43,21 @@ data "aws_ami" "ubuntu" {
   most_recent = true
 
   filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+    name   = "image-id"
+    values = ["ami-0bb323ae9abcae1a0"]
   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+  # filter {
+  #   name   = "virtualization-type"
+  #   values = ["hvm"]
+  # }
 
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
+  # filter {
+  #   name   = "architecture"
+  #   values = ["x86_64"]
+  # }
 
-  owners = ["099720109477"] # Canonical official
+  owners = ["137112412989"] # AWS official
 }
 
 # Use latest SLES 15 SP3
@@ -66,24 +66,24 @@ data "aws_ami" "sles" {
   owners      = ["013907871322"] # SUSE
 
   filter {
-    name   = "name"
-    values = ["suse-sles-15-sp3*"]
+    name   = "image-id"
+    values = ["ami-02d73fb365e045d16"]
   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+  # filter {
+  #   name   = "virtualization-type"
+  #   values = ["hvm"]
+  # }
 
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
+  # filter {
+  #   name   = "architecture"
+  #   values = ["x86_64"]
+  # }
 
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
+  # filter {
+  #   name   = "root-device-type"
+  #   values = ["ebs"]
+  # }
 }
 
 # data "aws_ami" "windows" {
