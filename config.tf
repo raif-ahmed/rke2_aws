@@ -44,7 +44,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "image-id"
-    values = ["ami-0bb323ae9abcae1a0"]
+    values = ["ami-04df7d76c1b804451"]
   }
 
   # filter {
@@ -57,7 +57,7 @@ data "aws_ami" "ubuntu" {
   #   values = ["x86_64"]
   # }
 
-  owners = ["137112412989"] # AWS official
+  owners = ["099720109477"] # Canonical official
 }
 
 # Use latest SLES 15 SP3
@@ -67,7 +67,8 @@ data "aws_ami" "sles" {
 
   filter {
     name   = "image-id"
-    values = ["ami-02d73fb365e045d16"]
+    # values = ["ami-0d2945b6b30408829"] # SLES 16
+    values = ["ami-0affda52580913356"] # SLES 15 SP7
   }
 
   # filter {

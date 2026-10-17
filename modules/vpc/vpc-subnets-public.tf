@@ -71,8 +71,7 @@ resource "aws_route_table_association" "route_net" {
 
 resource "aws_eip" "nat_eip" {
   count = (var.public_subnets == null) && !var.airgapped.enabled ? length(var.availability_zones) : 0
-  vpc   = true
-
+  
   tags = merge(
     {
       "Name" = "${var.vpc_id}-eip-${var.availability_zones[count.index]}"

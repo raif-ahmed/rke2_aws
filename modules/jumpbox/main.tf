@@ -143,19 +143,6 @@ data "template_cloudinit_config" "config" {
     content      = data.template_file.cloud_init.rendered
   }
 
-  dynamic "part" {
-    for_each = var.download_files_from_bucket ?  ["yes"] : []
-
-    content {
-      filename     = "00_download_s3.sh"
-      content_type = "text/x-shellscript"
-      content = templatefile("${abspath(path.root)}/templates/download_s3.tftpl", {
-        bucket_name = var.bucket_name
-        s3_files    = var.bucket_objects
-      })
-    }
-  }
-
 }
 
 resource "aws_instance" "jumpbox" {
