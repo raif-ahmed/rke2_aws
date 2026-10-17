@@ -1,0 +1,52 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: aws-ebs-csi-driver
+  namespace: kube-system
+spec:
+  chart: https://github.com/kubernetes-sigs/aws-ebs-csi-driver/releases/download/helm-chart-aws-ebs-csi-driver-2.36.0/aws-ebs-csi-driver-2.36.0.tgz
+  version: v2.36.0
+  targetNamespace: kube-system
+  valuesContent: |-
+    controller:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: Exists
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+      tolerations:
+      - operator: Exists
+    # storageClasses:
+    # # Add StorageClass with specific options or parameters resources like:
+    # - name: ebs-sc
+    #   # annotation metadata
+    #   annotations:
+    #     storageclass.kubernetes.io/is-default-class: "true"
+    #   # label metadata
+    #   labels:
+    #     iops-class: superfast
+    #   # defaults to WaitForFirstConsumer
+    #   volumeBindingMode: WaitForFirstConsumer
+    #   # defaults to Delete
+    #   reclaimPolicy: Retain
+    #   parameters:
+    #     encrypted: "true"
+
+    defaultStorageClass:
+      enabled: true
+    # volumeSnapshotClasses: 
+    # Add VolumeSnapshotClass resources like:
+    # - name: ebs-vsc
+    #   # annotation metadata
+    #   annotations:
+    #     snapshot.storage.kubernetes.io/is-default-class: "true"
+    #   # label metadata
+    #   labels:
+    #     my-label-is: supercool
+    #   # deletionPolicy must be specified
+    #   deletionPolicy: Delete
+    #   parameters:
