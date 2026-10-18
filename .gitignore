@@ -10,6 +10,7 @@
 .pem
 .rsa
 .key
+r-1-0-0-key.pem
 
 # Crash log files
 crash.log
