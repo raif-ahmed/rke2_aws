@@ -94,6 +94,7 @@ module "masters" {
   instance_count                = length(data.aws_availability_zones.aws_azs.names)
   ec2_sg_ids                    = [module.vpc.master_sg_id]
   node_type                     = "master"
+  execute_cloud_init            = true
   aws_iam_instance_profile_name = module.iam.master_instance_profile_name
   aws_key_name                  = aws_key_pair.ssh_key.key_name
   root_volume_iops              = var.aws_master_root_volume_iops
@@ -106,6 +107,13 @@ module "masters" {
   ec2_ami                       = local.ec2_master_ami.image_id
   user_data                     = ""
   publish_strategy              = var.aws_publish_strategy
+ # Internal Target Group ARNs from VPC module
+  target_group_arn_internal_https = module.vpc.target_group_arn_internal_https
+  target_group_arn_internal_http  = module.vpc.target_group_arn_internal_http
+
+  # Fixed variable reference (added var. prefix or used local)
+  target_group_arn_external_https = var.aws_publish_strategy == "External" ? module.vpc.target_group_arn_external_https : ""
+  target_group_arn_external_http  = var.aws_publish_strategy == "External" ? module.vpc.target_group_arn_external_http : ""
 }
 
 # https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws

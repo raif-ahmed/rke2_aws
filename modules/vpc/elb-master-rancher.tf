@@ -136,7 +136,7 @@ resource "aws_lb_target_group" "ingress_external_https" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     interval            = 10
-    port                = 6443
+    port                = 443
     protocol            = "TCP"
   }
 
@@ -165,7 +165,7 @@ resource "aws_lb_target_group" "ingress_external_http" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     interval            = 10
-    port                = 6443
+    port                = 80
     protocol            = "TCP"
   }
 
@@ -195,6 +195,7 @@ resource "aws_lb_listener" "ingress_internal_http" {
 }
 
 resource "aws_lb_listener" "ingress_external_https" {
+  count             = local.public_endpoints ? 1 : 0
   load_balancer_arn = aws_lb.ingress_external[0].arn
   protocol          = "TCP"
   port              = "443"
@@ -206,6 +207,7 @@ resource "aws_lb_listener" "ingress_external_https" {
 }
 
 resource "aws_lb_listener" "ingress_external_http" {
+  count             = local.public_endpoints ? 1 : 0
   load_balancer_arn = aws_lb.ingress_external[0].arn
   protocol          = "TCP"
   port              = "80"

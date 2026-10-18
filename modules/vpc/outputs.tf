@@ -72,3 +72,22 @@ output "aws_lb_api_internal_zone_id" {
   value = aws_lb.api_internal.zone_id
 }
 
+output "target_group_arn_internal_https" {
+  description = "ARN of the internal HTTPS target group"
+  value       = aws_lb_target_group.ingress_internal_https.arn
+}
+
+output "target_group_arn_internal_http" {
+  description = "ARN of the internal HTTP target group"
+  value       = aws_lb_target_group.ingress_internal_http.arn
+}
+
+output "target_group_arn_external_https" {
+  description = "ARN of the external HTTPS target group"
+  value       = try(aws_lb_target_group.ingress_external_https[0].arn, "")
+}
+
+output "target_group_arn_external_http" {
+  description = "ARN of the external HTTP target group"
+  value       = try(aws_lb_target_group.ingress_external_http[0].arn, "")
+}

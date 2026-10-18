@@ -1,0 +1,49 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - open-iscsi
+  - nfs-client
+users:
+- name: "etcd"
+  gecos: "etcd user"
+  system: true
+  no_create_home: true
+  shell: /sbin/nologin
+write_files:
+- path: /etc/rancher/rke2/config.yaml
+  permissions: "0600"
+  content: |
+    write-kubeconfig-mode: "0640"
+    token: token-a1b2c3d4
+    server: https://cp-int.r-1-0-0.raif-test.com:9345
+    tls-san:
+      - cp-int.r-1-0-0.raif-test.com
+      - cp.r-1-0-0.raif-test.com
+    # cni: canal
+- path: /root/.bashrc
+  content: |
+    PATH=/var/lib/rancher/rke2/bin:$PATH
+    [ -f /etc/rancher/rke2/rke2.yaml ] && export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && export CRI_CONFIG_FILE=/var/lib/rancher/rke2/agent/etc/crictl.yaml
+    [ -f /etc/rancher/k3s/k3s.yaml ] && export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    alias k=kubectl
+    complete -o default -F __start_kubectl k
+    source <(kubectl completion bash)
+- path: /home/ec2-user/.bashrc
+  content: |
+    PATH=/var/lib/rancher/rke2/bin:$PATH
+    [ -f /etc/rancher/rke2/rke2.yaml ] && export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && export CRI_CONFIG_FILE=/var/lib/rancher/rke2/agent/etc/crictl.yaml
+    [ -f /etc/rancher/k3s/k3s.yaml ] && export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    alias k=kubectl
+    complete -o default -F __start_kubectl k
+    source <(kubectl completion bash)
+runcmd:
+  - curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION="v1.34.12+rke2r1" sh -
+  - until curl -k https://cp-int.r-1-0-0.raif-test.com:6443/ping; do sleep 5; done
+  - systemctl enable --now rke2-server.service
+  - until [ -f /etc/rancher/rke2/rke2.yaml ]; do sleep 5; done
+  - mkdir -p /home/ec2-user/.kube
+  - cp /etc/rancher/rke2/rke2.yaml /home/ec2-user/.kube/config
+  - chown -R ec2-user:users /home/ec2-user/.kube
+  - chmod 600 /home/ec2-user/.kube/config
+  - ln -sf /var/lib/rancher/rke2/bin/kubectl /usr/local/bin/kubectl

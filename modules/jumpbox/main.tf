@@ -2,17 +2,12 @@ locals {
   public_endpoints = var.publish_strategy == "External" ? true : false
 }
 
-
-
 data "aws_partition" "current" {}
 
 data "aws_ebs_default_kms_key" "current" {}
 
-
-
 resource "aws_iam_instance_profile" "jumpbox" {
   name = "${var.cluster_id}-jumpbox-profile"
-
   role = aws_iam_role.jumpbox.name
 }
 
@@ -20,21 +15,19 @@ resource "aws_iam_role" "jumpbox" {
   name = "${var.cluster_id}-jumpbox-role"
   path = "/"
 
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "ec2.${data.aws_partition.current.dns_suffix}"
-            },
-            "Effect": "Allow",
-            "Sid": ""
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Principal = {
+          Service = "ec2.${data.aws_partition.current.dns_suffix}"
         }
+        Effect = "Allow"
+        Sid    = ""
+      }
     ]
-}
-EOF
+  })
 
   tags = merge(
     {
@@ -48,36 +41,31 @@ resource "aws_iam_role_policy" "jumpbox" {
   name = "${var.cluster_id}-jumpbox-policy"
   role = aws_iam_role.jumpbox.id
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "ec2:Describe*",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:AttachVolume",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:DetachVolume",
-      "Resource": "*"
-    },
-    {
-      "Action" : [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::*",
-      "Effect": "Allow"
-    }
-  ]
-}
-EOF
-
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "ec2:Describe*"
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ec2:AttachVolume"
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ec2:DetachVolume"
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "arn:aws:s3:::*"
+      }
+    ]
+  })
 }
 
 resource "aws_security_group" "jumpbox" {
@@ -125,24 +113,24 @@ resource "aws_security_group_rule" "egress" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
-# i will need two files, the cloud-init & the bash to connect to s3
-data "template_file" "cloud_init" {
-  template = file("${path.module}/templates/cloud-init.tftpl")
-}
-
-# Render a multi-part cloud-init config making use of the part
-# above, and other source files
-data "template_cloudinit_config" "config" {
-  gzip          = false
+# Render multi-part cloud-init user data
+data "cloudinit_config" "config" {
+  gzip          = true
   base64_encode = true
 
-  # Main cloud-config configuration file.
+  # Main cloud-config configuration file
   part {
-    filename     = "init.cfg"
+    filename     = "cloud-config.yaml"
     content_type = "text/cloud-config"
-    content      = data.template_file.cloud_init.rendered
+    content      = templatefile("${path.module}/templates/cloud-init.tftpl", {})
   }
 
+  # Additional shell script execution (e.g. S3 connection bash script)
+  # part {
+  #   filename     = "s3-connect.sh"
+  #   content_type = "text/x-shellscript"
+  #   content      = templatefile("${path.module}/templates/s3-connect.sh.tftpl", {})
+  # }
 }
 
 resource "aws_instance" "jumpbox" {
@@ -154,13 +142,9 @@ resource "aws_instance" "jumpbox" {
   vpc_security_group_ids      = flatten([var.vpc_security_group_ids, aws_security_group.jumpbox.id])
   associate_public_ip_address = local.public_endpoints
   key_name                    = var.aws_key_name
-  user_data_base64            = data.template_cloudinit_config.config.rendered
-  # user_data                   = data.template_cloudinit_config.config.rendered
-
+  user_data_base64            = data.cloudinit_config.config.rendered
 
   lifecycle {
-    # Ignore changes in the AMI which force recreation of the resource. This
-    # avoids accidental deletion of nodes whenever a new OS release comes out.
     ignore_changes = [ami]
   }
 
@@ -186,8 +170,3 @@ resource "aws_instance" "jumpbox" {
     var.tags,
   )
 }
-
-
-
-
-

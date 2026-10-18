@@ -1,0 +1,127 @@
+#cloud-config
+### System
+locale: en_US.UTF-8
+timezone: Europe/Amsterdam
+### Users
+# user: suse
+# ssh_authorized_keys:
+# - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOY5nEt0qssNTouZzN4LPg8M3OyDAwGDDvreTUMA6hQ5
+users:
+- default
+- name: "etcd"
+  gecos: "etcd user"
+  system: true
+  no_create_home: true
+  shell: /sbin/nologin
+### Install
+package_update: true
+package_upgrade: true
+# bootcmd:
+# - '[ -f /usr/bin/SUSEConnect ] && SUSEConnect -r <ActivationCode> -e <MAIL>'
+packages:
+- open-iscsi
+- nfs-client
+### Files
+write_files:
+- path: /usr/local/bin/kubectl-everything
+  permissions: 0755
+  content: |
+  #!/bin/sh
+  # Thanks to: https://github.com/kubernetes/kubectl/issues/151#issuecomment-851499071
+  kubectl get --show-kind --ignore-not-found $(kubectl api-resources --verbs=list --namespaced -o name | paste -s -d, -) $@
+- path: /root/.bashrc
+  content: |
+    PATH=/var/lib/rancher/rke2/bin:$PATH
+    [ -f /etc/rancher/rke2/rke2.yaml ] && export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && export CRI_CONFIG_FILE=/var/lib/rancher/rke2/agent/etc/crictl.yaml
+    [ -f /etc/rancher/k3s/k3s.yaml ] && export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    alias k=kubectl
+    complete -o default -F __start_kubectl k
+    source <(kubectl completion bash)
+- path: /etc/sysctl.d/90-kubelet.conf
+  content: |
+    vm.panic_on_oom=0
+    vm.overcommit_memory=1
+    kernel.panic=10
+    kernel.panic_on_oops=1
+    kernel.keys.root_maxbytes=25000000
+- path: /etc/sysctl.d/90-networking.conf
+  content: |
+    net.ipv4.conf.all.forwarding = 1
+    net.ipv6.conf.all.disable_ipv6 = 1
+    net.ipv6.conf.default.disable_ipv6 = 1
+    net.ipv6.conf.lo.disable_ipv6 = 1
+- path: /etc/rancher/k3s/kubelet.config
+  content: |
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    kind: KubeletConfiguration
+    evictionSoft:
+      memory.available: "2000Mi"
+      nodefs.available: "20%"
+      imagefs.available: "25%"
+    evictionSoftGracePeriod:
+      memory.available: "5m"
+      nodefs.available: "5m"
+      imagefs.available: "5m"
+    evictionMinimumReclaim:
+      memory.available: "200Mi"
+      nodefs.available: "1Gi"
+      imagefs.available: "1Gi"
+    evictionMaxPodGracePeriod: 60
+    streamingConnectionIdleTimeout: 5m
+    makeIPTablesUtilChains: true
+- path: /var/lib/rancher/k3s/server/audit.yaml
+  content: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+    - level: Metadata
+- path: /etc/rancher/k3s/config.yaml
+  content: |
+    protect-kernel-defaults: true
+    secrets-encryption: true
+    kube-apiserver-arg:
+      - 'audit-log-path=/var/lib/rancher/k3s/server/logs/audit.log'
+      - 'audit-policy-file=/var/lib/rancher/k3s/server/audit.yaml'
+      - 'audit-log-maxage=30'
+      - 'audit-log-maxbackup=10'
+      - 'audit-log-maxsize=100'
+      - 'request-timeout=300s'
+      - 'service-account-lookup=true'
+    kube-controller-manager-arg:
+      - 'terminated-pod-gc-threshold=10'
+      - 'use-service-account-credentials=true'
+    kubelet-arg: "config=/etc/rancher/k3s/kubelet.config"
+- path: /etc/systemd/system/shutdown-k3s.service
+  content: |
+    [Unit]
+    Description=Kill containerd-shims on shutdown
+    DefaultDependencies=false
+    Before=shutdown.target umount.target
+
+    [Service]
+    ExecStart=/usr/local/bin/k3s-killall.sh
+    Type=oneshot
+
+    [Install]
+    WantedBy=shutdown.target
+# - path: /etc/sysconfig/proxy
+#   content: |
+#     PROXY_ENABLED="yes"
+#     HTTP_PROXY=""
+#     HTTPS_PROXY=""
+#     FTP_PROXY=""
+#     NO_PROXY="127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+# ca-certs:
+#   trusted:
+#   - |
+#    -----BEGIN CERTIFICATE-----
+#    YOUR-ORGS-TRUSTED-CA-CERT-HERE
+#    -----END CERTIFICATE-----
+runcmd:
+- sysctl -p /etc/sysctl.d/*.conf
+- systemctl enable qemu-guest-agent.service
+- systemctl enable shutdown-k3s.service
+- mkdir -p -m 700 /var/lib/rancher/k3s/server/logs
+power_state:
+ mode: reboot
+ timeout: 30

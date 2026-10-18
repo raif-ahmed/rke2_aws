@@ -104,3 +104,31 @@ variable "node_type" {
     error_message = "For the node_type value only master and agent are allowed."
   }
 }
+
+variable "execute_cloud_init" {
+  type        = bool
+  description = "If set to true, renders and attaches a cloud-init template to the instance user_data."
+  default     = false
+}
+
+variable "target_group_arn_internal_https" {
+  type        = string
+  description = "ARN for the internal HTTPS target group"
+}
+
+variable "target_group_arn_internal_http" {
+  type        = string
+  description = "ARN for the internal HTTP target group"
+}
+
+variable "target_group_arn_external_https" {
+  type        = string
+  description = "ARN for the external HTTPS target group"
+  default     = ""
+}
+
+variable "target_group_arn_external_http" {
+  type        = string
+  description = "ARN for the external HTTP target group"
+  default     = ""
+}
