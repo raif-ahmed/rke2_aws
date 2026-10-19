@@ -50,37 +50,6 @@ module "iam" {
   enable_autoscaler_auto_discovery = var.enable_autoscaler_auto_discovery
 }
 
-# normally the files i want on any machine i will upload them to s3, 
-# then download them from s3 during cloud-init
-module "jumpbox_s3" {
-  source = "./modules/s3"
-
-  bucket_create   = true
-  bucket_name     = format("%s-%s", var.cluster_id, "jumpbox")
-  bucket_contents = [{ "key" = "id_rsa", "local_path" = "/home/ubuntu/.ssh/id_rsa", "content_base64" = "${base64encode(tls_private_key.ssh_key.private_key_pem)}" }]
-
-  tags = local.tags
-}
-module "jumpbox" {
-  source = "./modules/jumpbox"
-
-  ec2_ami                    = local.ec2_jumpbox_ami.image_id
-  instance_type              = var.aws_jumpbox_instance_type
-  cluster_id                 = var.cluster_id
-  aws_key_name               = aws_key_pair.ssh_key.key_name
-  subnet_id                  = var.aws_publish_jumbbox == "External" ? module.vpc.az_to_public_subnet_id[data.aws_availability_zones.aws_azs.names[0]] : module.vpc.az_to_private_subnet_id[data.aws_availability_zones.aws_azs.names[0]]
-  target_group_arns          = module.vpc.aws_lb_target_group_arns
-  target_group_arns_length   = module.vpc.aws_lb_target_group_arns_length
-  vpc_id                     = module.vpc.vpc_id
-  vpc_cidrs                  = module.vpc.vpc_cidrs
-  volume_kms_key_id          = var.aws_root_volume_kms_key_id
-  publish_strategy           = var.aws_publish_jumbbox
-  download_files_from_bucket = true
-  bucket_name                = module.jumpbox_s3.bucket_name
-  bucket_objects             = module.jumpbox_s3.bucket_objects
-
-  tags = local.tags
-}
 module "masters" {
   source = "./modules/nodes"
 
@@ -114,6 +83,26 @@ module "masters" {
   # Fixed variable reference (added var. prefix or used local)
   target_group_arn_external_https = var.aws_publish_strategy == "External" ? module.vpc.target_group_arn_external_https : ""
   target_group_arn_external_http  = var.aws_publish_strategy == "External" ? module.vpc.target_group_arn_external_http : ""
+}
+
+module "jumpbox" {
+  source = "./modules/jumpbox"
+
+  ec2_ami                    = local.ec2_jumpbox_ami.image_id
+  instance_type              = var.aws_jumpbox_instance_type
+  cluster_id                 = var.cluster_id
+  aws_key_name               = aws_key_pair.ssh_key.key_name
+  ssh_private_key_pem        = tls_private_key.ssh_key.private_key_pem
+  subnet_id                  = var.aws_publish_jumbbox == "External" ? module.vpc.az_to_public_subnet_id[data.aws_availability_zones.aws_azs.names[0]] : module.vpc.az_to_private_subnet_id[data.aws_availability_zones.aws_azs.names[0]]
+  target_group_arns          = module.vpc.aws_lb_target_group_arns
+  target_group_arns_length   = module.vpc.aws_lb_target_group_arns_length
+  vpc_id                     = module.vpc.vpc_id
+  vpc_cidrs                  = module.vpc.vpc_cidrs
+  volume_kms_key_id          = var.aws_root_volume_kms_key_id
+  publish_strategy           = var.aws_publish_jumbbox
+  master_ip                  = module.masters.ip_addresses[0]
+  rancher_server_url         = module.vpc.external_ingress_dns_name 
+  tags = local.tags
 }
 
 # https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws

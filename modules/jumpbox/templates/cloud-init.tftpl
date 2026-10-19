@@ -2,10 +2,12 @@
 package_update: true
 package_upgrade: true
 
-packages:
-  - ansible
-  - git
-  - awscli
+write_files:
+  - path: /home/ubuntu/.ssh/id_rsa
+    owner: root:root
+    permissions: '0600'
+    content: |
+      ${indent(6, private_key_pem)}
 
 runcmd:
   # Install latest stable kubectl binary (AMD64)
@@ -15,6 +17,37 @@ runcmd:
 
   # Install Helm binary using official installation script
   - [ sh, -c, 'curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3' ]
-  - [ chmod, 700, get_helm.sh ]
+  - [ chmod, '700', get_helm.sh ]
   - [ ./get_helm.sh ]
   - [ rm, -f, get_helm.sh ]
+
+  # Fix ownership and permissions for the ubuntu user
+  - [ chown, -R, ubuntu:ubuntu, /home/ubuntu/.ssh ]
+
+  # Wait for primary master API server to respond
+  - until curl -k https://cp-int.r-1-0-0.raif-test.com:6443/ping; do sleep 5; done
+
+  # Copy kubeconfig from primary master node using master_ip template variable
+  - scp -i /home/ubuntu/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${master_ip}:/tmp/rke2.yaml /tmp/rke2.yaml
+  - mkdir -p /home/ubuntu/.kube
+  - mv /tmp/rke2.yaml /home/ubuntu/.kube/config
+  - chmod 600 /home/ubuntu/.kube/config
+  - chown -R ubuntu:ubuntu /home/ubuntu/.kube
+
+  - export KUBECONFIG=/home/ubuntu/.kube/config
+
+  # 1. Wait until expected number of master nodes (3) appear in the cluster
+  - until [ $(kubectl get nodes -l node-role.kubernetes.io/control-plane=true --no-headers 2>/dev/null | wc -l) -ge 3 ]; do sleep 10; done
+
+  # 2. Wait until all master nodes report status 'Ready'
+  - kubectl  wait --for=condition=Ready nodes -l node-role.kubernetes.io/control-plane=true --timeout=300s
+
+  # 3. Add jetstack repo and install cert-manager
+  - helm repo add jetstack https://charts.jetstack.io 
+  - helm repo update 
+  - helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set installCRDs=true 
+
+  # 4. Add rancher-prime repo and install rancher
+  - helm repo add rancher-prime https://charts.rancher.com/server-charts/prime
+  - helm repo update 
+  - helm install rancher rancher-prime/rancher --namespace cattle-system --create-namespace --set hostname=${rancher_server_url} --version=2.15.2 --set replicas=3 

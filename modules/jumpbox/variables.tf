@@ -83,17 +83,19 @@ variable "aws_key_name" {
   type = string
 }
 
-variable "download_files_from_bucket" {
-  type = bool
+variable "ssh_private_key_pem" {
+  type        = string
+  description = "The private key pem content to create the jumpbox node's SSH key pair."
 }
 
-variable "bucket_name" {
-  type = string
+variable "master_ip" {
+  type        = string
+  description = "The IP address of the master node that will be used to copy kubeconfig."
+  default     = ""
 }
 
-variable "bucket_objects" {
-
-  type        = list(any)
-  default     = []
-  description = "S3 files needed to be downloaded to the jumpbox."
+variable "rancher_server_url" {
+  type        = string
+  description = "The URL of the Rancher server."
+  default     = ""
 }

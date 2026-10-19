@@ -1,4 +1,5 @@
 output "ip_addresses" {
-  value = aws_network_interface.ec2.*.private_ips
+  description = "List of primary private IP addresses for master nodes"
+  value       = aws_instance.ec2[*].private_ip
 }
 

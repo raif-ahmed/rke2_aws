@@ -91,3 +91,8 @@ output "target_group_arn_external_http" {
   description = "ARN of the external HTTP target group"
   value       = try(aws_lb_target_group.ingress_external_http[0].arn, "")
 }
+
+output "external_ingress_dns_name" {
+  description = "DNS record / domain name of the external ingress network load balancer"
+  value       = local.public_endpoints ? aws_lb.ingress_external[0].dns_name : null
+}

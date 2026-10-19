@@ -4,12 +4,6 @@ package_upgrade: true
 packages:
   - open-iscsi
   - nfs-client
-users:
-- name: "etcd"
-  gecos: "etcd user"
-  system: true
-  no_create_home: true
-  shell: /sbin/nologin
 write_files:
 - path: /etc/rancher/rke2/config.yaml
   permissions: "0600"
@@ -37,7 +31,7 @@ write_files:
     complete -o default -F __start_kubectl k
     source <(kubectl completion bash)
 runcmd:
-  - curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION="v1.34.12+rke2r1" sh -
+  - curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION="v1.36.5+rke2r1" sh -
   - systemctl enable --now rke2-server.service
   - until [ -f /etc/rancher/rke2/rke2.yaml ]; do sleep 5; done
   - mkdir -p /home/ec2-user/.kube
@@ -45,3 +39,7 @@ runcmd:
   - chown -R ec2-user:users /home/ec2-user/.kube
   - chmod 600 /home/ec2-user/.kube/config
   - ln -sf /var/lib/rancher/rke2/bin/kubectl /usr/local/bin/kubectl
+  # prepare kubeconfig file that i will copy to jumpbox
+  - cp /etc/rancher/rke2/rke2.yaml /tmp/rke2.yaml 
+  - chown ec2-user /tmp/rke2.yaml
+  - sed -i "s/127.0.0.1/cp-int.r-1-0-0.raif-test.com/g" /tmp/rke2.yaml

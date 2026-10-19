@@ -118,11 +118,14 @@ data "cloudinit_config" "config" {
   gzip          = true
   base64_encode = true
 
-  # Main cloud-config configuration file
   part {
     filename     = "cloud-config.yaml"
     content_type = "text/cloud-config"
-    content      = templatefile("${path.module}/templates/cloud-init.tftpl", {})
+    content = templatefile("${path.module}/templates/cloud-init.tftpl", {
+      private_key_pem     = var.ssh_private_key_pem
+      master_ip           = var.master_ip
+      rancher_server_url  = var.rancher_server_url
+    })
   }
 
   # Additional shell script execution (e.g. S3 connection bash script)
