@@ -43,3 +43,17 @@ runcmd:
   - cp /etc/rancher/rke2/rke2.yaml /tmp/rke2.yaml 
   - chown ec2-user /tmp/rke2.yaml
   - sed -i "s/127.0.0.1/cp-int.r-1-0-0.raif-test.com/g" /tmp/rke2.yaml
+  # Wait for RKE2 manifests directory to exist, then write HelmChartConfig
+  - until [ -d /var/lib/rancher/rke2/server/manifests ]; do sleep 5; done
+  - |
+    cat << 'EOF' > /var/lib/rancher/rke2/server/manifests/rke2-traefik-config.yaml
+    apiVersion: helm.cattle.io/v1
+    kind: HelmChartConfig
+    metadata:
+      name: rke2-traefik
+      namespace: kube-system
+    spec:
+      valuesContent: |-
+        additionalArguments:
+          - "--serversTransport.insecureSkipVerify=true"
+    EOF
