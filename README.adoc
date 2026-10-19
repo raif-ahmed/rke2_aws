@@ -56,23 +56,62 @@ git cli
 https://www.atlassian.com/git/tutorials/install-git#linux
 
 
-
-
 terraform 0.15 or later
 
 aws privileges
 
 === Installation Procedure
 
-
-
+[source,bash]
+----
 git clone
+----
 
-Deploying the cluster
-Initialize the Terraform:
+==== Deploying the cluster 
+(if exists, destroy it first)
 
+[source,bash]
+----
+terraform destroy -auto-approve
+----
+
+==== Initialize the Terraform
+[source,bash]
+----
 terraform init
-Run the terraform provisioning:
+----
 
+==== Run terraform provisioning
+[source,bash]
+----
 terraform plan
 terraform apply
+----
+
+once finished you will see the output of the terraform which will include the public IP of the jumpbox and the URL of the rancher server by running the following command:
+
+[source,bash]
+----
+terraform output
+----
+
+you will need to copy the private key to your local machine and set the right permission for it so you can use it to connect to the jumpbox
+
+[source,bash]
+----
+sudo cp ./r-1-0-0-key.pem /home/raif/.ssh/r-1-0-0-key.pem
+sudo chmod 600 /home/raif/.ssh/r-1-0-0-key.pem
+
+export IP_ADDR=<jumpbox_public_ip>
+ssh -i ~/.ssh/r-1-0-0-key.pem ubuntu@$IP_ADDR
+----
+
+on the jumpbox 
+
+
+sudo tail -n 100 /var/log/cloud-init-output.log
+
+# 3. View detailed cloud-init execution trace
+sudo tail -n 100 /var/log/cloud-init.log
+
+cloud-init status --long
